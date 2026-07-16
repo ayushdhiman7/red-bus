@@ -18,7 +18,7 @@ A full-stack bus booking application inspired by RedBus — search routes, pick 
 
 <br/>
 
-[Features](#-features) · [Tech Stack](#-tech-stack) · [Getting Started](#-getting-started) · [API](#-api-endpoints) · [Project Structure](#-project-structure)
+[Features](#-features) · [Tech Stack](#-tech-stack) · [Getting Started](#-getting-started) · [Docker](#-running-with-docker) · [API](#-api-endpoints) · [Project Structure](#-project-structure)
 
 </div>
 
@@ -138,6 +138,85 @@ App runs at **http://localhost:5173**
 
 ---
 
+## 🐳 Running with Docker
+
+Run the full stack (frontend + backend) in containers with live code sync for development.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/)
+- MongoDB Atlas connection string (or uncomment the `mongodb` service in `docker-compose.yml` for a local database)
+- Razorpay test keys
+
+### 1. Configure environment files
+
+Create the same `.env` files as in [Getting Started](#-getting-started):
+
+**`server/.env`**
+
+```env
+MONGO_URI=your_mongodb_connection_string
+NODE_ENV=development
+JWT_SECRET=your_jwt_secret
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+PORT=5000
+```
+
+**`client/.env`**
+
+```env
+VITE_API_URL=http://localhost:5000
+REACT_APP_RAZORPAY_KEY=your_razorpay_key_id
+```
+
+> **Important:** Use `http://localhost:5000` for `VITE_API_URL` when running locally with Docker. The browser runs on your host machine, so it must reach the backend via the published port — not the internal Docker service name (`backend`).
+
+### 2. Build and start
+
+From the project root:
+
+```bash
+docker compose build
+docker compose up
+```
+
+| Service   | URL                         |
+|-----------|-----------------------------|
+| Frontend  | http://localhost:5173       |
+| Backend   | http://localhost:5000       |
+
+Stop the stack:
+
+```bash
+docker compose down
+```
+
+### How it works
+
+- **`docker-compose.yml`** defines two services: `frontend` (Vite) and `backend` (Express).
+- **Volume mounts** sync `./client` and `./server` into the containers so code changes reflect immediately without rebuilding.
+- **Anonymous volumes** for `/app/node_modules` keep container dependencies separate from your host.
+- **Vite** is configured with `host: true` in `client/vite.config.ts` so the dev server is reachable from outside the container (required for port mapping to work).
+
+### Useful commands
+
+```bash
+# Rebuild images after dependency changes
+docker compose build
+
+# Run in detached (background) mode
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Restart a single service
+docker compose restart frontend
+```
+
+---
+
 ## 📡 API Endpoints
 
 | Method | Endpoint | Auth | Description |
@@ -168,15 +247,18 @@ red-bus/
 │   │   ├── services/       # API helpers
 │   │   ├── data/           # Mock / static data
 │   │   └── types/          # TypeScript types
+│   ├── Dockerfile          # Frontend container image
 │   ├── .env                # Frontend env (gitignored)
 │   └── package.json
 │
 ├── server/                 # Express + MongoDB API
 │   ├── src/                # Models, controllers, middleware
 │   ├── server.js           # App entry point
+│   ├── Dockerfile          # Backend container image
 │   ├── .env                # Backend env (gitignored)
 │   └── package.json
 │
+├── docker-compose.yml      # Multi-container orchestration
 ├── data/                   # Sample JSON datasets
 └── README.md
 ```

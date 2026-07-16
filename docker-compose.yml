@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  # -----------------------------
+  # MongoDB Database
+  # -----------------------------
+  # mongodb:
+  #   image: mongo:8                  # Using MongoDB version 8
+  #   container_name: mongodb         # Friendly container name
+  #   restart: always                 # Restart automatically if it crashes
+
+  # -----------------------------
+  # Frontend (React + Vite)
+  # -----------------------------
+  frontend:
+    build:
+      context: ./client             # Go inside the client folder and build the image
+
+    container_name: frontend
+
+    ports:
+      - "5173:5173"                 # Host Port : Container Port
+
+    env_file:
+      - ./client/.env
+
+    volumes:
+      # Live sync between your computer and the container
+      - ./client:/app
+
+      # Keep node_modules inside the container
+      - /app/node_modules
+
+    depends_on:
+      - backend
+
+  # -----------------------------
+  # Backend (Express)
+  # -----------------------------
+  backend:
+    build:
+      context: ./server             # Go inside the server folder and build the image
+
+    container_name: backend
+
+    ports:
+      - "5000:5000"
+
+    env_file:
+      - ./server/.env
+
+    volumes:
+      # Live sync between your computer and the container
+      - ./server:/app
+
+      # Keep node_modules inside the container
+      - /app/node_modules
+
+
+# ----------------------------------------------------
+# Docker Notes
+# ----------------------------------------------------
+
+# Docker Image
+# A Docker image is a read-only blueprint (template)
+# that contains everything needed to create and run
+# a Docker container, including:
+# - Operating System
+# - Runtime (Node.js)
+# - Libraries
+# - Dependencies
+# - Application Code
+
+# Docker Container
+# A container is a running instance of a Docker image.
